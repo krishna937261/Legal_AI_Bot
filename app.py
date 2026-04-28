@@ -17,7 +17,7 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-API_BASE = "http://127.0.0.1:8000"
+API_BASE = "https://legal-ai-bot-w8ro.onrender.com"
 
 # ── Custom CSS ────────────────────────────────────────────────────────────────
 st.markdown("""
