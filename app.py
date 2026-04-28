@@ -17,7 +17,7 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-API_BASE = "https://legal-ai-bot-w8ro.onrender.com"
+API_BASE = "http://127.0.0.1:8000"
 
 # ── Custom CSS ────────────────────────────────────────────────────────────────
 st.markdown("""
@@ -324,6 +324,8 @@ page = st.sidebar.radio("", [
     "📁  Document Checklist",
     "📚  IPC Sections",
     "📊  Model Evaluation",
+    "🏛  RTI Assistant",
+    "🚗  Traffic Fine Checker",
 ], label_visibility="collapsed")
 
 st.sidebar.markdown("---")
@@ -701,3 +703,258 @@ To train the model and generate evaluation metrics:<br><br>
         for col,(label,val) in zip([c1,c2,c3,c4], expected):
             with col:
                 st.markdown(f'<div class="metric-box"><div class="metric-val" style="font-size:1.4rem;">{val}</div><div class="metric-label">{label}<br>(InLegalBERT)</div></div>', unsafe_allow_html=True)
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# PAGE: RTI ASSISTANT
+# ═══════════════════════════════════════════════════════════════════════════════
+elif "RTI Assistant" in page:
+    st.markdown('<div class="result-card-title" style="font-size:1rem;letter-spacing:3px;">🏛 RTI APPLICATION ASSISTANT</div>', unsafe_allow_html=True)
+    st.markdown('<div style="color:#5a5040;font-size:0.8rem;margin-bottom:1.5rem;">Draft a Right to Information application under the RTI Act, 2005. Identify the correct public authority and frame your query effectively.</div>', unsafe_allow_html=True)
+
+    # ── Authority selector ────────────────────────────────────────────────────
+    AUTHORITIES = {
+        "Central Government": [
+            "Ministry of Finance", "Ministry of Home Affairs", "Ministry of Law & Justice",
+            "Ministry of Education", "Ministry of Health & Family Welfare",
+            "Ministry of Railways", "Ministry of External Affairs",
+            "Ministry of Defence", "Income Tax Department", "Central Bureau of Investigation (CBI)",
+            "Enforcement Directorate (ED)", "SEBI", "RBI", "EPFO",
+        ],
+        "State Government": [
+            "State Police Department", "State Revenue Department", "State PWD",
+            "State Health Department", "State Education Department",
+            "State Electricity Board", "Municipal Corporation", "Gram Panchayat",
+            "District Collectorate", "State Transport Department",
+        ],
+        "Judiciary & Constitutional Bodies": [
+            "High Court Registry", "Supreme Court Registry",
+            "Election Commission of India", "CAG Office", "UPSC", "State PSC",
+        ],
+        "Public Sector Undertakings": [
+            "BSNL", "ONGC", "BHEL", "Air India", "Indian Oil Corporation",
+            "NTPC", "Coal India", "LIC of India", "SBI", "Bank of Baroda",
+        ],
+    }
+
+    col1, col2 = st.columns(2)
+    with col1:
+        authority_type = st.selectbox("Type of Public Authority *", list(AUTHORITIES.keys()))
+        authority_name = st.selectbox("Select Authority *", AUTHORITIES[authority_type])
+        applicant_name = st.text_input("Your Full Name *", placeholder="As per Aadhaar / PAN")
+        applicant_address = st.text_input("Your Address *", placeholder="Full address with PIN code")
+    with col2:
+        applicant_phone = st.text_input("Mobile Number", placeholder="10-digit mobile number")
+        applicant_email = st.text_input("Email Address", placeholder="your@email.com")
+        rti_fee_paid = st.selectbox("RTI Fee Payment Mode", ["Indian Postal Order (IPO)", "Demand Draft", "Online Payment", "Court Fee Stamp"])
+        state = st.text_input("State", placeholder="e.g. Maharashtra, Delhi")
+
+    subject = st.text_input("Subject of RTI Application *", placeholder="e.g. Status of my pending PF withdrawal claim")
+    info_sought = st.text_area(
+        "Information Sought *",
+        placeholder="Describe clearly what information you want. Be specific.\ne.g. Please provide:\n1. Current status of my PF withdrawal application no. XXXX\n2. Dates of all actions taken on my application\n3. Name and designation of the officer handling my case",
+        height=150
+    )
+    period = st.text_input("Period of Information", placeholder="e.g. From January 2023 to December 2024")
+
+    if st.button("GENERATE RTI APPLICATION", use_container_width=False):
+        if applicant_name and applicant_address and subject and info_sought:
+            from datetime import date
+            today = date.today().strftime("%d %B %Y")
+            rti_draft = f"""TO,
+The Public Information Officer (PIO),
+{authority_name},
+{authority_type},
+{state if state else '[State]'}
+
+Date: {today}
+
+SUBJECT: APPLICATION UNDER RIGHT TO INFORMATION ACT, 2005 — {subject.upper()}
+
+Sir/Madam,
+
+I, {applicant_name}, resident of {applicant_address}, hereby request the following information under Section 6(1) of the Right to Information Act, 2005:
+
+INFORMATION SOUGHT:
+{info_sought}
+
+{"PERIOD: " + period if period else ""}
+
+I am enclosing the application fee of Rs. 10/- by way of {rti_fee_paid} as required under the RTI Act, 2005.
+
+If the information sought is held by another public authority or the subject matter more closely concerns another public authority, I request you to transfer this application under Section 6(3) of the RTI Act, 2005.
+
+I request you to provide the information within the stipulated period of 30 days as prescribed under Section 7(1) of the RTI Act, 2005.
+
+Thanking you,
+
+Yours faithfully,
+
+{applicant_name}
+Address: {applicant_address}
+{("Mobile: " + applicant_phone) if applicant_phone else ""}
+{("Email: " + applicant_email) if applicant_email else ""}
+Date: {today}
+
+——————————————————————————————————
+IMPORTANT NOTES:
+• Send via Speed Post / Registered Post and keep acknowledgement.
+• If no reply within 30 days, file First Appeal under Section 19(1) with the Appellate Authority.
+• If First Appeal unsatisfactory, file Second Appeal with Central/State Information Commission within 90 days.
+• RTI fee: Rs. 10/- (free for BPL applicants — attach BPL card copy).
+• You may track your RTI at: rtionline.gov.in (for Central Government RTIs)
+——————————————————————————————————"""
+
+            st.success("✓ RTI Application Generated")
+            st.markdown('<div class="result-card">', unsafe_allow_html=True)
+            st.markdown('<div class="result-card-title">RTI APPLICATION DRAFT</div>', unsafe_allow_html=True)
+            st.markdown('<div class="draft-output">' + rti_draft.replace("\n", "<br>") + '</div>', unsafe_allow_html=True)
+            st.markdown('</div>', unsafe_allow_html=True)
+
+            st.download_button(
+                "⬇ Download RTI Application",
+                rti_draft,
+                file_name=f"RTI_Application_{applicant_name.replace(' ','_')}_{today.replace(' ','_')}.txt",
+                mime="text/plain"
+            )
+
+            # Tips
+            st.markdown('<div class="result-card" style="margin-top:1rem;">', unsafe_allow_html=True)
+            st.markdown('<div class="result-card-title">📌 TIPS FOR BEST RESPONSE</div>', unsafe_allow_html=True)
+            tips = [
+                "Be specific — vague questions get vague answers.",
+                "Ask for documents/records, not opinions or explanations.",
+                "Use numbered points to list each piece of information separately.",
+                "If denied, cite Section 19(1) in your First Appeal.",
+                "Keep a copy of everything you send and receive.",
+                "Central RTIs can be filed online at rtionline.gov.in",
+            ]
+            for tip in tips:
+                st.markdown(f'<div class="step-item">💡 {tip}</div>', unsafe_allow_html=True)
+            st.markdown('</div>', unsafe_allow_html=True)
+
+            st.markdown('<div class="disclaimer">⚠ This is an AI-generated RTI draft. Review before sending. For complex matters, consult a legal expert or RTI activist.</div>', unsafe_allow_html=True)
+        else:
+            st.warning("Please fill in all required fields (*).")
+
+    # ── RTI Info ──────────────────────────────────────────────────────────────
+    with st.expander("📖 What is RTI? Know Your Rights"):
+        st.markdown("""
+<div style="color:#9a9080;font-size:0.85rem;line-height:2;">
+<span style="color:#c9a84c;font-weight:600;">Right to Information Act, 2005</span> gives every Indian citizen the right to request information from any public authority.<br><br>
+<span style="color:#c9a84c;">Who can apply?</span> Any Indian citizen.<br>
+<span style="color:#c9a84c;">Fee:</span> Rs. 10/- (Free for BPL cardholders).<br>
+<span style="color:#c9a84c;">Response time:</span> 30 days (48 hours if life/liberty at stake).<br>
+<span style="color:#c9a84c;">First Appeal:</span> Within 30 days of no/unsatisfactory reply — to Appellate Authority.<br>
+<span style="color:#c9a84c;">Second Appeal:</span> Within 90 days — to Central/State Information Commission.<br>
+<span style="color:#c9a84c;">Online portal:</span> rtionline.gov.in (for Central Government departments).<br>
+</div>
+""", unsafe_allow_html=True)
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# PAGE: TRAFFIC FINE CHECKER
+# ═══════════════════════════════════════════════════════════════════════════════
+elif "Traffic Fine Checker" in page:
+    st.markdown('<div class="result-card-title" style="font-size:1rem;letter-spacing:3px;">🚗 TRAFFIC FINE CHECKER</div>', unsafe_allow_html=True)
+    st.markdown('<div style="color:#5a5040;font-size:0.8rem;margin-bottom:1.5rem;">Instant look-up of fines under the Motor Vehicles (Amendment) Act, 2019. Search by offence or browse by category.</div>', unsafe_allow_html=True)
+
+    FINES_DB = [
+        {"offence": "Drunken Driving", "category": "Impairment", "section": "Sec 185 MVA", "first_offence": "₹10,000 or 6 months imprisonment or both", "repeat_offence": "₹15,000 or 2 years imprisonment or both", "severity": "HIGH"},
+        {"offence": "Over Speeding (LMV)", "category": "Speed", "section": "Sec 183 MVA", "first_offence": "₹1,000", "repeat_offence": "₹2,000", "severity": "MEDIUM"},
+        {"offence": "Over Speeding (Medium Passenger Vehicle)", "category": "Speed", "section": "Sec 183 MVA", "first_offence": "₹2,000", "repeat_offence": "₹4,000", "severity": "MEDIUM"},
+        {"offence": "Driving Without Licence", "category": "Licence", "section": "Sec 181 MVA", "first_offence": "₹5,000", "repeat_offence": "₹10,000", "severity": "HIGH"},
+        {"offence": "Driving Despite Disqualification", "category": "Licence", "section": "Sec 182 MVA", "first_offence": "₹10,000 or 3 months imprisonment or both", "repeat_offence": "₹10,000 or 3 months imprisonment or both", "severity": "HIGH"},
+        {"offence": "Not Wearing Helmet", "category": "Safety Gear", "section": "Sec 194D MVA", "first_offence": "₹1,000 + 3 months disqualification", "repeat_offence": "₹2,000 + 3 months disqualification", "severity": "MEDIUM"},
+        {"offence": "Not Wearing Seat Belt", "category": "Safety Gear", "section": "Sec 194B MVA", "first_offence": "₹1,000", "repeat_offence": "₹1,000", "severity": "LOW"},
+        {"offence": "Using Mobile Phone While Driving", "category": "Distraction", "section": "Sec 184 MVA", "first_offence": "₹5,000", "repeat_offence": "₹10,000", "severity": "HIGH"},
+        {"offence": "Driving Without Insurance", "category": "Documents", "section": "Sec 196 MVA", "first_offence": "₹2,000 or 3 months imprisonment or both", "repeat_offence": "₹4,000 or 3 months imprisonment or both", "severity": "HIGH"},
+        {"offence": "Driving Without Registration", "category": "Documents", "section": "Sec 192 MVA", "first_offence": "₹5,000", "repeat_offence": "₹10,000", "severity": "HIGH"},
+        {"offence": "Vehicle Overloading (Passengers)", "category": "Overloading", "section": "Sec 194A MVA", "first_offence": "₹1,000 per extra passenger", "repeat_offence": "₹1,000 per extra passenger", "severity": "MEDIUM"},
+        {"offence": "Vehicle Overloading (Goods)", "category": "Overloading", "section": "Sec 194 MVA", "first_offence": "₹20,000 + ₹2,000 per extra tonne", "repeat_offence": "₹20,000 + ₹2,000 per extra tonne", "severity": "HIGH"},
+        {"offence": "Dangerous / Rash Driving", "category": "Reckless Driving", "section": "Sec 184 MVA", "first_offence": "₹5,000 or 6 months imprisonment or both", "repeat_offence": "₹10,000 or 2 years imprisonment or both", "severity": "HIGH"},
+        {"offence": "Jumping Red Light", "category": "Traffic Signal", "section": "Sec 177 MVA", "first_offence": "₹1,000", "repeat_offence": "₹2,000", "severity": "MEDIUM"},
+        {"offence": "Wrong Side Driving", "category": "Reckless Driving", "section": "Sec 184 MVA", "first_offence": "₹5,000", "repeat_offence": "₹10,000", "severity": "HIGH"},
+        {"offence": "No Pollution Under Control (PUC) Certificate", "category": "Documents", "section": "Sec 190(2) MVA", "first_offence": "₹10,000 or 6 months imprisonment or both", "repeat_offence": "₹10,000 or 6 months imprisonment or both", "severity": "HIGH"},
+        {"offence": "Driving Without Valid Fitness Certificate", "category": "Documents", "section": "Sec 192 MVA", "first_offence": "₹5,000", "repeat_offence": "₹10,000", "severity": "HIGH"},
+        {"offence": "Obstruction / Illegal Parking", "category": "Parking", "section": "Sec 177 MVA", "first_offence": "₹500", "repeat_offence": "₹1,500", "severity": "LOW"},
+        {"offence": "Not Giving Way to Emergency Vehicle", "category": "Emergency", "section": "Sec 194E MVA", "first_offence": "₹10,000 or 6 months imprisonment or both", "repeat_offence": "₹10,000 or 6 months imprisonment or both", "severity": "HIGH"},
+        {"offence": "Unauthorised Use of Horn / Air Horn", "category": "Noise", "section": "Sec 190(2) MVA", "first_offence": "₹1,000", "repeat_offence": "₹2,000", "severity": "LOW"},
+        {"offence": "Racing / Speeding Contest on Road", "category": "Reckless Driving", "section": "Sec 189 MVA", "first_offence": "₹5,000 or 1 month imprisonment or both", "repeat_offence": "₹10,000 or 1 month imprisonment or both", "severity": "HIGH"},
+        {"offence": "Minor Driving Vehicle", "category": "Licence", "section": "Sec 199A MVA", "first_offence": "Guardian/owner fined ₹25,000 + 3 years imprisonment, vehicle registration cancelled", "repeat_offence": "Guardian/owner fined ₹25,000 + 3 years imprisonment", "severity": "HIGH"},
+        {"offence": "Not Carrying Driving Licence", "category": "Licence", "section": "Sec 130 MVA", "first_offence": "₹500", "repeat_offence": "₹500", "severity": "LOW"},
+        {"offence": "Tinted Glass (Violating VLT norms)", "category": "Vehicle Condition", "section": "Sec 190 MVA", "first_offence": "₹100 per day", "repeat_offence": "₹300 per day", "severity": "LOW"},
+    ]
+
+    categories = ["All"] + sorted(list(set(f["category"] for f in FINES_DB)))
+    severities = ["All", "HIGH", "MEDIUM", "LOW"]
+
+    # ── Search & Filter ───────────────────────────────────────────────────────
+    col1, col2, col3 = st.columns([3, 1.5, 1.5])
+    with col1:
+        search_query = st.text_input("🔍 Search Offence", placeholder="e.g. helmet, drunk, mobile, insurance...")
+    with col2:
+        filter_cat = st.selectbox("Category", categories)
+    with col3:
+        filter_sev = st.selectbox("Severity", severities)
+
+    # Filter logic
+    results = FINES_DB
+    if search_query:
+        results = [f for f in results if search_query.lower() in f["offence"].lower() or search_query.lower() in f["section"].lower()]
+    if filter_cat != "All":
+        results = [f for f in results if f["category"] == filter_cat]
+    if filter_sev != "All":
+        results = [f for f in results if f["severity"] == filter_sev]
+
+    st.markdown(f'<div style="color:#5a5040;font-size:0.75rem;margin-bottom:1rem;">{len(results)} offence(s) found</div>', unsafe_allow_html=True)
+
+    # ── Results ───────────────────────────────────────────────────────────────
+    if results:
+        for fine in results:
+            sev = fine["severity"]
+            sev_cls = {"HIGH": "risk-high", "MEDIUM": "risk-medium", "LOW": "risk-low"}.get(sev, "")
+            sev_icon = {"HIGH": "🔴", "MEDIUM": "🟡", "LOW": "🟢"}.get(sev, "")
+
+            st.markdown(f"""
+<div style="background:#111318;border:1px solid #c9a84c22;border-radius:6px;padding:1.2rem 1.5rem;margin-bottom:0.8rem;">
+  <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:0.8rem;">
+    <div>
+      <span style="color:#c9a84c;font-size:0.95rem;font-weight:600;">{fine['offence']}</span>
+      <span style="background:#1a1710;border:1px solid #c9a84c33;color:#c9a84c;padding:2px 8px;border-radius:2px;font-size:0.65rem;margin-left:8px;letter-spacing:1px;">{fine['section']}</span>
+    </div>
+    <span class="{sev_cls}" style="font-size:0.72rem;">{sev_icon} {sev}</span>
+  </div>
+  <div style="display:flex;gap:1.5rem;flex-wrap:wrap;">
+    <div>
+      <div style="color:#5a5040;font-size:0.65rem;letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">First Offence</div>
+      <div style="color:#d4c9b0;font-size:0.85rem;">{fine['first_offence']}</div>
+    </div>
+    <div style="border-left:1px solid #c9a84c22;padding-left:1.5rem;">
+      <div style="color:#5a5040;font-size:0.65rem;letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">Repeat Offence</div>
+      <div style="color:#ff6b6b;font-size:0.85rem;">{fine['repeat_offence']}</div>
+    </div>
+  </div>
+  <div style="margin-top:8px;">
+    <span style="background:#111318;border:1px solid #333;color:#6a6050;padding:2px 8px;border-radius:2px;font-size:0.68rem;">{fine['category']}</span>
+  </div>
+</div>""", unsafe_allow_html=True)
+    else:
+        st.markdown('<div class="result-card"><div style="color:#5a5040;">No offences found. Try a different search term.</div></div>', unsafe_allow_html=True)
+
+    # ── Summary stats ─────────────────────────────────────────────────────────
+    st.markdown("---")
+    c1, c2, c3, c4 = st.columns(4)
+    high = len([f for f in FINES_DB if f["severity"] == "HIGH"])
+    med  = len([f for f in FINES_DB if f["severity"] == "MEDIUM"])
+    low  = len([f for f in FINES_DB if f["severity"] == "LOW"])
+    with c1:
+        st.markdown(f'<div class="metric-box"><div class="metric-val">{len(FINES_DB)}</div><div class="metric-label">Total Offences</div></div>', unsafe_allow_html=True)
+    with c2:
+        st.markdown(f'<div class="metric-box"><div class="metric-val" style="color:#ff6b6b;">{high}</div><div class="metric-label">High Severity</div></div>', unsafe_allow_html=True)
+    with c3:
+        st.markdown(f'<div class="metric-box"><div class="metric-val" style="color:#ffcc55;">{med}</div><div class="metric-label">Medium Severity</div></div>', unsafe_allow_html=True)
+    with c4:
+        st.markdown(f'<div class="metric-box"><div class="metric-val" style="color:#66bb88;">{low}</div><div class="metric-label">Low Severity</div></div>', unsafe_allow_html=True)
+
+    st.markdown('<div class="disclaimer">⚠ Fines as per Motor Vehicles (Amendment) Act, 2019. Actual fines may vary by state. Verify with official sources before legal proceedings.</div>', unsafe_allow_html=True)
