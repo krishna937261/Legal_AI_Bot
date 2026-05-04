@@ -758,7 +758,7 @@ elif "RTI Assistant" in page:
     period = st.text_input("Period of Information", placeholder="e.g. From January 2023 to December 2024")
 
     if st.button("GENERATE RTI APPLICATION", use_container_width=False):
-        if applicant_name and applicant_address and subject and info_sought:
+        if applicant_name.strip() and applicant_address.strip() and subject.strip() and info_sought.strip():
             from datetime import date
             today = date.today().strftime("%d %B %Y")
             rti_draft = f"""TO,
